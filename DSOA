@@ -1,0 +1,131 @@
+#!/usr/bin/bash
+
+# Simple script to clean Arch filesystem automatically
+# 
+# Exit code:
+# 0: Run successfully
+# 1: Stopped script
+# 2: Unexpected error
+
+# Shitty directories
+shittyDirectory=(
+  '~/.adobe'
+  '~/.macromedia'
+  '~/.recently-used'
+  '~/.local/share/recently-used.xbel'
+  '~/Desktop'
+  '~/.thumbnails'
+  '~/.gconfd'
+  '~/.gconf'
+  '~/.local/share/gegl-0.2'
+  '~/.FRD/log/app.log'   
+  '~/.FRD/links.txt'
+  '~/.objectdb'
+  '~/.gstreamer-0.10'
+  '~/.pulse'
+  '~/.esd_auth'
+  '~/.config/enchant'
+  '~/.spicec'
+  '~/.dropbox-dist'
+  '~/.parallel'
+  '~/.dbus'
+  '~/ca2'
+  '~/ca2~'
+  '~/.distlib/'
+  '.bazaar/'
+  '~/.bzr.log'
+  '~/.nv/'
+  '~/.viminfo'
+  '~/.npm/'
+  '~/.java/'
+  '~/.oracle_jre_usage/'
+  '~/.jssc/'
+  '~/.tox/'
+  '~/.pylint.d/'
+  '~/.qute_test/'
+  '~/.QtWebEngineProcess/'
+  '~/.qutebrowser/'
+  '~/.asy/'
+  '~/.cmake/'
+  '~/.gnome/'
+  '~/unison.log'
+  '~/.texlive/'
+  '~/.w3m/'
+  '~/.subversion/'
+  '~/nvvp_workspace/'
+  '~/.ansible/'
+  '~/.fltk/'
+  '~/.vnc/'
+)
+
+# Function to remove old packages
+function rm_pac_cache() {
+  if which paccache > /dev/null; then # Check if exist paccache
+    sudo paccache -r 
+  else
+    echo "Error: paccache doesn't exist"
+    exit 2
+  fi
+}
+
+# Function to remove orphaned packages
+function rm_orphaned_package() {
+  sudo pacman -Rns $(pacman -Qtdq) 
+}
+
+# Function to remove shitty directories
+function clean_home_dir() {
+  cd ${HOME} # Change directory into your home
+
+  homeFile=$(ls -la | awk '{print $9}') # List all file in the current directory
+  
+  for file in ${shittyDirectory[@]}; do
+    if [[ "$(echo ${homeFile} | grep ${file})" != "" ]]; then # Check if a directory in one of the listed in shittyDirectory
+      rmhomeFile+="${file} "
+    fi
+  done
+
+  if [[ "${rmhomeFile}" != "" ]]; then 
+    echo "Found some shitty directory:"
+    echo ${rmhomeFile}
+    read -p "Do you want delete all [y/n]? " ans
+
+    if [[ "${ans}" == "y" ]]; then
+      for file in ${rmhomeFile[@]}; do
+        rm -r ${file} # Delete all the shitty directories
+      done
+    fi
+
+  else
+    echo "Not shitty directory found"
+  fi
+}
+
+# Main
+function main() {
+  echo "Removing old packages in /var/cache/pacman/pkg/"
+  read -p "Press any key to continue..."
+  rm_pac_cache
+
+  echo "Removing orphaned packages"
+  read -p "Press any key to continue..."
+  rm_orphaned_package
+
+  echo "Removing shitty directory in ${HOME}"
+  read -p "Press any key to continue..."
+  clean_home_dir
+}
+
+if [[ "$(groups)" != "root" ]]; then
+  main
+else
+  echo "You shouldn't run this script as root"
+  read -p "Continue [y/n]? " ans
+
+  if [[ "${ans}" == "y" ]]; then
+    main
+  else
+    exit 1
+  fi
+fi
+
