@@ -58,12 +58,23 @@ shittyDirectory=(
   '~/.vnc/'
 )
 
+# Colors
+BLACK='\033[0;30m'
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+ORANGE='\033[1;33m'
+BLUE='\033[1;34m'
+PURPLE='\033[1;35m'
+YELLOW='\033[1;33m'
+WHITE='\033[1;37m'
+NULL='\033[0;m'
+
 # Function to remove old packages
 function rm_pac_cache() {
   if which paccache > /dev/null; then # Check if exist paccache
     sudo paccache -r 
   else
-    echo "Error: paccache doesn't exist"
+    echo -e "${RED}Error: paccache doesn't exist${NULL}"
     exit 2
   fi
 }
@@ -86,7 +97,7 @@ function clean_home_dir() {
   done
 
   if [[ "${rmhomeFile}" != "" ]]; then 
-    echo "Found some shitty directory:"
+    echo -e "${GREEN}Found some shitty directory:${NULL}"
     echo ${rmhomeFile}
     read -p "Do you want delete all [y/n]? " ans
 
@@ -97,7 +108,25 @@ function clean_home_dir() {
     fi
 
   else
-    echo "Not shitty directory found"
+    echo -e "${ORANGE}Not shitty directory found${NULL}"
+  fi
+}
+
+# Function to remove broken symlink
+function rm_broken_symlink() {
+  echo -e "${GREEN}Scanning filesystem, it could take a while...${NULL}"
+
+  # Scanning all broken symlink
+  brokenSymlink=( $(find / -xtype l -exec sh -c 'file -b "$1" | grep -q ^broken' sh {} \; -print 2> /dev/null) )
+
+  echo -e "${YELLOW}WARNING${WHITE}: You should not blindly delete all broken symbolic links, as some of them serve a purpose!${NULL}"
+
+  read -p "Do you want to continue [y/n]? " ans
+
+  if [[ "${ans}" == "y" ]]; then
+    for file in ${brokenSymlink[@]}; do
+      rm ${file} 2> /dev/null # Delete broken symlink
+    done
   fi
 }
 
@@ -107,19 +136,23 @@ function main() {
   read -p "Press any key to continue..."
   rm_pac_cache
 
-  echo "Removing orphaned packages"
+  echo -e "\nRemoving orphaned packages"
   read -p "Press any key to continue..."
   rm_orphaned_package
 
-  echo "Removing shitty directory in ${HOME}"
+  echo -e "\nRemoving shitty directory in ${HOME}"
   read -p "Press any key to continue..."
   clean_home_dir
+  
+  echo -e "\nRemoving broken symlink"
+  read -p "Press any key to continue..."
+  rm_broken_symlink
 }
 
 if [[ "$(groups)" != "root" ]]; then
   main
 else
-  echo "You shouldn't run this script as root"
+  echo -e "${RED}You shouldn't run this script as root${NULL}"
   read -p "Continue [y/n]? " ans
 
   if [[ "${ans}" == "y" ]]; then
@@ -128,4 +161,3 @@ else
     exit 1
   fi
 fi
-
