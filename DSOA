@@ -123,7 +123,7 @@ function rm_broken_symlink() {
   echo "There are ${#brokenSymlink[@]} broken symlink"
 
   if [[ "${#brokenSymlink[@]}" != "0" ]]; then # Check if there are broken symlink
-    echo -e "${YELLOW}WARNING${WHITE}: You should not blindly delete all broken\
+    echo -e "${YELLOW}WARNING${WHITE}: You should not blindly delete all broken \
 symbolic links, as some of them serve a purpose!${NULL}"
 
     read -p "Do you want to continue [y/n]? " ans
