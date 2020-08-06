@@ -91,7 +91,8 @@ function clean_home_dir() {
   homeFile=$(ls -la | awk '{print $9}') # List all file in the current directory
   
   for file in ${shittyDirectory[@]}; do
-    if [[ "$(echo ${homeFile} | grep ${file})" != "" ]]; then # Check if a directory in one of the listed in shittyDirectory
+    # Check if a directory in one of the listed in shittyDirectory
+    if [[ "$(echo ${homeFile} | grep ${file})" != "" ]]; then 
       rmhomeFile+="${file} "
     fi
   done
@@ -118,15 +119,20 @@ function rm_broken_symlink() {
 
   # Scanning all broken symlink
   brokenSymlink=( $(find / -xtype l -exec sh -c 'file -b "$1" | grep -q ^broken' sh {} \; -print 2> /dev/null) )
+  
+  echo "There are ${#brokenSymlink[@]} broken symlink"
 
-  echo -e "${YELLOW}WARNING${WHITE}: You should not blindly delete all broken symbolic links, as some of them serve a purpose!${NULL}"
+  if [[ "${#brokenSymlink[@]}" != "0" ]]; then # Check if there are broken symlink
+    echo -e "${YELLOW}WARNING${WHITE}: You should not blindly delete all broken\
+symbolic links, as some of them serve a purpose!${NULL}"
 
-  read -p "Do you want to continue [y/n]? " ans
+    read -p "Do you want to continue [y/n]? " ans
 
-  if [[ "${ans}" == "y" ]]; then
-    for file in ${brokenSymlink[@]}; do
-      rm ${file} 2> /dev/null # Delete broken symlink
-    done
+    if [[ "${ans}" == "y" ]]; then
+      for file in ${brokenSymlink[@]}; do
+        rm ${file} 2> /dev/null # Delete broken symlink
+      done
+    fi
   fi
 }
 
